@@ -45,12 +45,11 @@ def parse_utmp_h(utmp_file):
         for line in ut_fd:
             if "#define" in line:
                 if "UT_LINESIZE" in line:
-                    fields = line.split(' ')
+                    fields = line.split()
                     lastlog_ut_linesize = int(fields[-1])
                 if "UT_HOSTSIZE" in line:
-                    fields = line.split(' ')
+                    fields = line.split()
                     lastlog_ut_hostsize = int(fields[-1])
-    print(str(lastlog_ut_linesize)+" "+str(lastlog_ut_hostsize))
     return lastlog_ut_linesize, lastlog_ut_hostsize
 
 def parse_passwd(passwd_file):
