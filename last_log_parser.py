@@ -11,8 +11,8 @@ def parse_lastlog(lastlog_file, users_list, lastlog_ut_linesize, lastlog_ut_host
     ll_unpack_definition = ""
     if lastlog_ut_timesize ==4:
         ll_unpack_definition = ll_unpack_definition + "I"
-    ll_unpack_definition = ll_unpack_definition + str(lastlog_ut_hostsize) + "s"
     ll_unpack_definition = ll_unpack_definition + str(lastlog_ut_linesize) + "s"
+    ll_unpack_definition = ll_unpack_definition + str(lastlog_ut_hostsize) + "s"
     ll_uid_list = []
     with open(lastlog_file, 'rb') as ll_fd:
         ll_test = ll_fd.read()
