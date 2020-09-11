@@ -90,7 +90,7 @@ This argument may be passed multiple times, and in conjunction with the -p flag.
 parser.add_argument('-f', '--file', help='The lastlog database file to be parsed.', action='store', required=True)
 parser.add_argument('-u', '--utmp', help='The bits/utmp.h file that contains the record description definitions.', action='store', default="")
 parser.add_argument('-p', '--passwd', help='The passwd file for converting UID to username, if desired.', action='store', default="")
-parser.add_argument('-hd', '--hintdir', help='Hint directory.  This will try to determine username / UID mappings by file or directory name based on UID ownership.', action='append')
+parser.add_argument('-hd', '--hintdir', help='Hint directory.  This will try to determine username / UID mappings by file or directory name based on UID ownership.', action='append', default=[])
 parser.add_argument('-uls', '--linesize', help='The lastlog UT_LINESIZE definition.  Set this manually if no bits/utmp.h is available.', action='store', default=32, type=int)
 parser.add_argument('-uhs', '--hostsize', help='The lastlog UT_HOSTSIZE definition.  Set this manually if no bits/utmp.h is available.', action='store', default=256, type=int)
 parser.add_argument('-uts', '--timesize', help='The lastlog TIME size.  Default is 4 bytes, but this flag allows changing this if the target lastlog struct uses a different size.', action='store', default=4, type=int)
