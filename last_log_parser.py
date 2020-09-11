@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import os
 import sys
 import struct
 import argparse
@@ -33,9 +34,9 @@ def parse_lastlog(lastlog_file, users_list, lastlog_ut_linesize, lastlog_ut_host
 def ll_get_usernames(users_list, uids_list):
     for user_rec in users_list:
         for uid_rec in uids_list:
-            ll_user, ll_uid = user_rec
+            ll_user, ll_uid, ll_hint = user_rec
             if str(uid_rec) == str(ll_uid):
-                print(ll_uid, ll_user)
+                print(ll_uid, ll_user, ll_hint)
 
 def parse_utmp_h(utmp_file):
     lastlog_ut_linesize = 32
@@ -52,15 +53,28 @@ def parse_utmp_h(utmp_file):
                     lastlog_ut_hostsize = int(fields[-1])
     return lastlog_ut_linesize, lastlog_ut_hostsize
 
-def parse_passwd(passwd_file):
+def parse_passwd(passwd_file, u_list):
     users_list = []
+    users_list = u_list
     with open(passwd_file, 'r') as pw_fd:
         for line in pw_fd:
             user_pair = []
             username, trash, uid, *trash_list = line.split(':')
             user_pair.append(username)
             user_pair.append(uid)
+            user_pair.append('passwd')
             users_list.append(user_pair)
+    return users_list
+
+def parse_user_hints(hint_dir, u_list):
+    users_list = []
+    users_list = u_list
+    for h_dir in os.listdir(hint_dir):
+        user_pair = []
+        user_pair.append(str(h_dir))
+        user_pair.append(os.stat(hint_dir+"/"+h_dir).st_uid)
+        user_pair.append(str(hint_dir))
+        users_list.append(user_pair)
     return users_list
 
 parser = argparse.ArgumentParser(
@@ -68,10 +82,15 @@ parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog='''Either use -u, or use -uls and -uhs.  The -uts can be used with either combination.
 If -p is given, the username to UID mappings are given after the lastlog data.
-This is because it is not impossible for duplicate UIDs to exist in the passwd file.''')
+This is because it is not impossible for duplicate UIDs to exist in the passwd file.
+
+If -hd is given, the username is assumed to be the name of the file or directory, and the UID is owner of that file or directory.
+This is useful if passing /home, /var/spool/mail, or /var/spool/cron, for example.
+This argument may be passed multiple times, and in conjunction with the -p flag.''')
 parser.add_argument('-f', '--file', help='The lastlog database file to be parsed.', action='store', required=True)
 parser.add_argument('-u', '--utmp', help='The bits/utmp.h file that contains the record description definitions.', action='store', default="")
 parser.add_argument('-p', '--passwd', help='The passwd file for converting UID to username, if desired.', action='store', default="")
+parser.add_argument('-hd', '--hintdir', help='Hint directory.  This will try to determine username / UID mappings by file or directory name based on UID ownership.', action='append')
 parser.add_argument('-uls', '--linesize', help='The lastlog UT_LINESIZE definition.  Set this manually if no bits/utmp.h is available.', action='store', default=32, type=int)
 parser.add_argument('-uhs', '--hostsize', help='The lastlog UT_HOSTSIZE definition.  Set this manually if no bits/utmp.h is available.', action='store', default=256, type=int)
 parser.add_argument('-uts', '--timesize', help='The lastlog TIME size.  Default is 4 bytes, but this flag allows changing this if the target lastlog struct uses a different size.', action='store', default=4, type=int)
@@ -93,6 +112,11 @@ if len(args.utmp) > 0:
 
 #If we want to map the usernames for convenience, this should be set.
 if len(args.passwd) > 0:
-    users_list = parse_passwd(args.passwd)
+    users_list = parse_passwd(args.passwd, users_list)
+
+#if we want to attempt to map usernames by hints, this should be set.
+if len(args.hintdir) > 0:
+    for hint_dir in args.hintdir:
+        users_list = parse_user_hints(hint_dir, users_list)
 
 parse_lastlog(args.file, users_list, lastlog_ut_linesize, lastlog_ut_hostsize, lastlog_ut_timesize)
